@@ -561,4 +561,67 @@ def plot3():
     store.close()
     plt.show()  
 
+
+def curve_fit_gaussian(xdata,ydata,sigma,parm='default'):
+#------------------------------------------------------------------------------------------------------
+    def gaussianm(x,*parm):
+        peak_numb = (len(parm)-1)/3
+        junk = parm[-1]
+        for i in range(peak_numb):
+            junk = junk + parm[i*3]*np.exp(-np.power(x-parm[i*3+1],2)/(2*np.power(parm[i*3+2],2)))
+        return junk
+#------------------------------------------------------------------------------------------------------        
+    from scipy.optimize import curve_fit
+    # find default p0
+    # a: I.I,  b: x[max(y)], c: FMWH, d: bg, e: bg slope
+    d = min(ydata)
+    b = xdata[ydata == max(ydata)][0]
+    junk = abs(ydata-max(ydata)/2)
+    xl = xdata[xdata < b][junk[xdata < b] == min(junk[xdata < b])][0]
+    xh = xdata[xdata > b][junk[xdata > b] == min(junk[xdata > b])][0]
+    c = abs((xh-xl)/2)
+    a = abs(c*2*max(ydata))
+    if parm == 'default':
+        parm = [a,b,c,d]
+#------------------------------------------------------------------------------------------------------        
+    popt, pcov = curve_fit(gaussianm, xdata, ydata,p0 = parm,sigma=sigma)
+    margin = (max(xdata)-min(xdata))/10
+    x1 = np.linspace(min(xdata)-margin,max(xdata)+margin,100)
+    plt.errorbar(xdata,ydata,yerr = sigma,fmt='o')
+    perr = np.sqrt(np.diag(pcov))
+    n_peak = (len(parm)-1)/3
+    label_text_data = []
+    label_text_text = ''
+    for i in range(len(popt)):
+        label_text_data.append(popt[i])
+        label_text_data.append(perr[i])
+    for i in range(n_peak):
+        label_text_text = label_text_text + 'I.I : {'+str(i*6+0)+':.3f}({'+str(i*6+1)+':.3f})\n' \
+                                            + 'Peak : {'+str(i*6+2)+':.3f}({'+str(i*6+3)+':.3f})\n' \
+                                            + 'FMWH : {'+str(i*6+4)+':.3f}({'+str(i*6+5)+':.3f})\n'+'-'*30+'\n'
+    label_text_text = label_text_text + 'BG : {'+str(len(popt)*2-2)+':.3f}({'+str(len(popt)*2-1)+':.3f})'
+    label_text = label_text_text.format(*label_text_data)
+
+    plt.plot(x1,gaussianm(x1,*popt),'-',label=label_text)
+    plt.legend()  
+    plt.show()
+    return popt,perr   
+
+def curve_fit(data,xran='all',parm='default'):
+    # find default p0
+    # a: I.I,  b: x[max(y)], c: FMWH, d: bg, e: bg slope
+    xdata = data['x']
+    ydata = data['y']
+    sigma = data['dy']
+    if xran != 'all':
+        index_select = xdata[xdata > xran[0]][xdata < xran[1]].index
+        xdata = xdata[index_select]
+        ydata = ydata[index_select]
+        sigma = sigma[index_select]
+    xdata = xdata.values
+    ydata = ydata.values
+    sigma = sigma.values
+    fit_out = curve_fit_gaussian(xdata,ydata,sigma,parm = parm)
+    plt.show()
+    return fit_out
     
