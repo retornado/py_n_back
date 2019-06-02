@@ -28,7 +28,7 @@ def relative_t(en,flight_length = 76.6):
     return flight_length/light_c/np.sqrt(junk)*10**9
 
 def t_to_e(t,flight_length = 76.6):
-    # t -- > en
+    # t -- > en(MeV)
     return (72.3*flight_length/t)**2
 
 def relative_resol_e(resol_t,en,flight_length=76.6):

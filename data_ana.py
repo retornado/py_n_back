@@ -8,6 +8,7 @@ import matplotlib.pylab as plt
 import csns_read_nightly as cra
 
 def en_from_peakamp(x):
+    # 道值能量关系
     A = (5.805-5.275)/(1334.27418 - 1200.32056)
     B = 5.275 - 1200.32056*A
     return x*A + B
@@ -19,13 +20,11 @@ def cali_peak_ana():
     junk = store.select('data')
     cra.file_ana(junk,store,baseline_points = 80,polarize = -1,datafile_path = datafile_path,method = 'peak_ana_simple',save = True)
     store.close()
-    
 
 def cali():
     store = pd.HDFStore( r'D:\root\11712.h5')
     data = store.select('data_ana','board_id = 2 & peak_amp <2000 & peak_amp>700')
     fig = plt.figure()
-    
     plt.rcParams['font.sans-serif']=['SimHei'] #用来正常显示中文标签
     plt.rcParams['axes.unicode_minus']=False #用来正常显示负号
     plt.xticks(fontsize=14)    
@@ -441,6 +440,7 @@ class U_coin(Plot):
         self.label(xlabel,ylabel)
 
     def data_slice(self,xx,yy):
+        # 画出被选出的
         self.xx = xx
         self.yy = yy
         plt.plot(xx,[yy[0],yy[0]],color = 'red')
@@ -454,9 +454,9 @@ class U_coin(Plot):
             self.store.append(key_bk,self.data_all,format='table', data_columns=True,index = False,complevel=4, complib='blosc')
         except:
             self.store.remove(key_bk)
-        select_condition = '%s > %f & %s < %f & %s > %f & %s < %f' % (self.x_name,self.xx[0],
+        self.select_condition = '%s > %f & %s < %f & %s > %f & %s < %f' % (self.x_name,self.xx[0],
                             self.x_name,self.xx[1],self.y_name,self.yy[0],self.y_name,self.yy[1])     
-        self.data = self.store.select(key_bk,select_condition)
+        self.data = self.store.select(key_bk,self.select_condition)
         if remove:
             self.store.remove(key_bk)
         
@@ -465,7 +465,7 @@ class U_coin(Plot):
         self.data = self.data_all.drop(self.data.index)
     
     def save_to_store(self,key = True):
-        if key:
+        if key is True:
             key = self.key + '_select'
         self.store.append(key,self.data,format='table', data_columns=True,index = False,complevel=4, complib='blosc')
 
